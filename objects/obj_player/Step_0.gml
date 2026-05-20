@@ -1,7 +1,47 @@
+// SPAWN CPU DURING CPU TURN (DO THIS FIRST)----- (DISABLED) -----
+//if (global.game_phase == "cpu" && !instance_exists(obj_cpu)) {
+    //instance_create_layer(spawn_x, spawn_y, "Instances", obj_cpu);
+//}
+
+global.game_phase = "player";
+
+// THEN handle player visibility
+invisible = true;
+
+// Detect when player turn starts
+if (global.game_phase == "player" && !player_turn_started) {
+
+    // Reset position
+    x = spawn_x;
+    y = spawn_y;
+
+    vspeed = 0;
+    hspeed = 0;
+
+    // Reset movement
+    charging = false;
+    charge = 0;
+
+    // Reset rotation
+    rotation = 0;
+    rotation_speed = 0;
+    image_angle = 0;
+
+    // Reset tricks
+    flip_count = 0;
+    last_flip_label = "";
+    tuck_quality = "none";
+
+    // Reset state
+    state = "idle";
+    image_index = 0;
+}
+
 // --- WATER STATE ---
 var was_in_water = in_water;
 
 // --- INPUT ---
+
 var move = keyboard_check(vk_right) - keyboard_check(vk_left);
 var jump = keyboard_check_released(vk_down);
 var crouch = keyboard_check(vk_down);
@@ -177,12 +217,11 @@ if (place_meeting(x, y, obj_platform)) {
 // --- UNTUCK TIMER ---
 if (untuck_timer > 0) {
     untuck_timer--;
-}
 
-// Freeze ONLY during respawn
-if (respawn_timer > 0) {
-    vspeed = 0;
-    hspeed = 0;
+    if (respawn_timer > 0 || untuck_timer > 0) {
+        vspeed = 0;
+        hspeed = 0;
+    }
 }
 
 // --- STATE SYSTEM ---
@@ -452,7 +491,11 @@ camera_follow = true;
 }
 
     // --- RESET ---
-	x = spawn_x;
+if (global.game_phase == "player" && !player_turn_started) {
+
+    player_turn_started = true;
+
+    x = spawn_x;
     y = spawn_y;
 
     vspeed = 0;
@@ -479,7 +522,7 @@ while (!place_meeting(x, y + 1, obj_platform)) {
 }
 
 // Now correctly grounded
-{ on_ground = true;
+on_ground = true;
 }
 
 // --- RESPAWN SYSTEM ---
@@ -546,6 +589,6 @@ if (camera_follow && instance_exists(camera_target)) {
     // STOP FOLLOWING WHEN SPLASH SLOWS
     if (abs(camera_target.vspeed) < 0.5) {
     camera_follow = false;
-    respawn_timer = 30; //triggerespawn here
+    respawn_timer = 20; //trigger respawn here
 	}
 }
