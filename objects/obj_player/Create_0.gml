@@ -66,7 +66,7 @@ var cam = view_camera[0];
 camera_target = noone;
 camera_follow = false;
 
-// --- TURN PHASES ---
+// --- TURN PHASES --- (This is for future)
 global.game_phase = "cpu";
 
 global.cpu_attempt = 0;
