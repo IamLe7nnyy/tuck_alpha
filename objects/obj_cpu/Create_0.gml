@@ -1,8 +1,6 @@
 is_cpu = true;
 
-cpu_move = 0;
-cpu_jump = 0;
-cpu_crouch = 0;
+move = 0;
 
 // --- MOVEMENT ---
 vspeed = 0;
@@ -71,3 +69,5 @@ camera_follow = false;
 
 // --- one jump per attempt ---
 has_jumped = false;
+
+last_rotation = 0;

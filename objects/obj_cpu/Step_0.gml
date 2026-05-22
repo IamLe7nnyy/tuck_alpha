@@ -1,103 +1,113 @@
-// ==============================
-// 0. SAFETY CHECK (only exist during CPU turn)
-// ==============================
-if (global.game_phase != "cpu") {
-    instance_destroy();
+// --- RESPAWN SYSTEM ---
+if (respawn_timer > 0) {
+
+    respawn_timer--;
+
+    vspeed = 0;
+    hspeed = 0;
+
+    if (respawn_timer > 0) exit;
+
+    // --- RESPAWN ---
+    x = spawn_x;
+    y = spawn_y;
+
+    vspeed = 0;
+    hspeed = 0;
+
+    charging = false;
+    charge = 0;
+
+    rotation = 0;
+    rotation_speed = 0;
+    image_angle = 0;
+
+    flip_count = 0;
+    last_flip_label = "";
+    tuck_quality = "none";
+
+    performed_cheesecutter = false;
+    trick_multiplier = 1;
+
+    state = "idle";
+    image_index = 0;
+
+    var safety = 0;
+    while (!place_meeting(x, y + 1, obj_platform) && safety < 1000) {
+        y += 1;
+        safety++;
+    }
+
+    on_ground = true;
+
     exit;
 }
 
-// ==============================
-// 1. CPU INPUT (AI)
-// ==============================
-
-// Reset inputs
-cpu_move = 0;
-cpu_jump = 0;
-cpu_crouch = 0;
-
-// Always move right
-cpu_move = 1;
-
-// Charge jump
-if (on_ground && vspeed == 0 && !in_water) {
-    has_jumped = false;
-}
-
-if (on_ground && !has_jumped) {
-
-    cpu_crouch = 1;
-
-    if (charge >= irandom_range(max_charge * 0.6, max_charge)) {
-        cpu_jump = 1;
-        cpu_crouch = 0;
-
-        has_jumped = true;
-    }
-}
-
-// Tuck timing
-if (!on_ground && !in_water) {
-
-    var water = instance_nearest(x, y, obj_water);
-
-    if (water != noone) {
-
-        var trigger_y = water.bbox_top - 150;
-
-        if (y > trigger_y && y < water.bbox_top) {
-            cpu_crouch = 1;
-        }
-    }
-}
-
-// CPU commits to a flip
-if (!on_ground && !in_water) {
-
-    if (rotation_speed == 0) {
-        rotation_speed = choose(-6, 6); // left or right flip
-    }
-}
-
-// Force CPU to spin mid-air
-if (!on_ground && !in_water) {
-
-    if (rotation_speed == 0) {
-        rotation_speed = choose(-6, 6);
-    }
-}
-
-// ==============================
-// 2. FLAG AS CPU
-// ==============================
-is_cpu = true;
-
-
-// ==============================
-// 3. PLAYER LOGIC (CPU USES THIS)
-// ==============================
 
 // --- WATER STATE ---
 var was_in_water = in_water;
 
-// --- INPUT ---
-var move;
-var jump;
-var crouch;
 
-move = cpu_move;
-jump = cpu_jump;
-crouch = cpu_crouch;
+// --- CPU INPUT ---
+var crouch = false;
+
+
+// --- GROUND BEHAVIOUR ---
+if (on_ground) {
+
+    // stay still on ground (prevents jitter)
+    move = 0;
+    hspeed = 0;
+
+    crouch = true;
+}
+
+
+// --- RELEASE JUMP ---
+if (charging && charge > irandom_range(max_charge * 0.4, max_charge * 0.9)) {
+    crouch = false;
+}
+
+
+// --- AIR CONTROL (STABLE) ---
+if (!on_ground) {
+	
+	last_rotation = rotation;
+
+    // choose direction ONCE per jump
+    if (abs(hspeed) < 0.1) {
+        move = choose(-1, 1);
+    }
+
+    // occasional trick
+    if (random(1) < 0.02 && !performed_cheesecutter) {
+        performed_cheesecutter = true;
+        trick_multiplier = 2;
+    }
+	
+	if (!on_ground && tuck_quality == "none" && random(1) < 0.03) {
+	    tuck_quality = choose("bad", "ok", "good", "perfect");
+	}
+}
 
 
 // --- GROUND CHECK ---
-if (place_meeting(x, y + 1, obj_platform)) {
-    on_ground = true;
-} else {
-    on_ground = false;    
+on_ground = place_meeting(x, y + 1, obj_platform);
+
+//RESET AIR ACTION WHEN LANDED
+if (on_ground) {
+    air_action = "none";
 }
 
+
 // --- WATER STATE ---
-in_water = place_meeting(x, y, obj_water);
+in_water = place_meeting(x, bbox_bottom, obj_water);
+
+
+// --- AUTO UNTUCK ---
+if (in_water && !crouch && untuck_timer <= 0) {
+    untuck_timer = 10;
+}
 
 
 // --- CHARGING ---
@@ -105,10 +115,7 @@ if (on_ground && crouch) {
     charging = true;
 
     charge += 0.5;
-
-    if (charge > max_charge) {
-        charge = max_charge;
-    }
+    charge = min(charge, max_charge);
 }
 
 
@@ -120,8 +127,18 @@ if (on_ground) {
 x += hspeed;
 
 
-// --- ANGLED JUMP ---
-if (charging && jump) {
+// --- WATER FRICTION ---
+if (in_water) {
+    hspeed *= 0.7;
+    vspeed *= 0.7;
+}
+
+
+// --- JUMP ---
+if (charging && !crouch) {
+
+    performed_cheesecutter = false;
+    trick_multiplier = 1;
 
     var charge_power = charge / max_charge;
 
@@ -136,27 +153,33 @@ if (charging && jump) {
     charging = false;
     charge = 0;
     on_ground = false;
+	
+	tuck_quality = "none";
+	
+	air_action = choose("frontflip", "backflip", "tuck", "none");
 }
 
-// --- VERTICAL MOVEMENT WITH COLLISION ---
-vspeed += gravity;
 
-// Move step-by-step to prevent tunneling
-var steps = ceil(abs(vspeed));
+// --- GRAVITY ---
+if (!on_ground) {
 
-repeat (steps) {
+    var rotate_input = move;
+    var target_speed = rotate_input * 6;
+    rotation_speed = lerp(rotation_speed, target_speed, 0.2);
 
-    var step_amount = sign(vspeed);
+    rotation -= rotation_speed;
+    image_angle = rotation;
 
-    if (!place_meeting(x, y + step_amount, obj_platform)) {
-        y += step_amount;
-    }
-    else {
-        vspeed = 0;
-        on_ground = true;
-        break;
+    if (in_water) {
+        vspeed += gravity * 3;
+    } else {
+        vspeed += gravity;
     }
 }
+
+
+// --- APPLY VERTICAL ---
+y += vspeed;
 
 
 // --- PLATFORM COLLISION ---
@@ -171,20 +194,154 @@ if (place_meeting(x, y, obj_platform)) {
 }
 
 
-// ==============================
-// 4. SPLASH BLOCK
-// ==============================
-if (in_water && !was_in_water) {
+// --- UNTUCK TIMER ---
+if (untuck_timer > 0) {
+    untuck_timer--;
+}
 
-    var splash_score = current_score;
 
-    global.cpu_attempt++;
-    global.cpu_best_score = max(global.cpu_best_score, splash_score);
+// --- STATE SYSTEM ---
+if (untuck_timer > 0) {
+    state = "untuck";
+}
+else if (charging) {
+    state = "crouch";
+}
+else if (!on_ground) {
 
-    // 🔥 SWITCH TURN
-    if (global.cpu_attempt >= global.max_attempts) {
-        global.game_phase = "player";
+    if (performed_cheesecutter) {
+        state = "cheesecutter";
+    }
+    else {
+
+        switch (air_action) {
+
+            case "tuck":
+                state = "tuck";
+                break;
+
+            case "backflip":
+                state = "backflip";
+                break;
+
+            case "frontflip":
+                state = "frontflip";
+                break;
+
+            default:
+                state = "jump";
+        }
+    }
+}
+else if (abs(hspeed) > 0.5) {
+    state = "walk";
+}
+else {
+    state = "idle";
+}
+
+
+// --- ANIMATION ---
+var new_sprite = spr_idle_1;
+
+switch (state) {
+
+    case "idle": new_sprite = spr_idle_1; image_speed = 0.1; break;
+    case "walk": new_sprite = spr_walk_1; image_speed = 0.3; break;
+
+    case "jump": new_sprite = spr_jump_1; break;
+    case "crouch": new_sprite = spr_crouch_1; break;
+    case "tuck": new_sprite = spr_tuck_1; break;
+    case "untuck": new_sprite = spr_untuck_1; break;
+    case "backflip": new_sprite = spr_backflip_1; break;
+    case "frontflip": new_sprite = spr_frontflip_1; break;
+    case "cheesecutter": new_sprite = spr_cheesecutter_1; break;
+
+    default:
+        new_sprite = spr_idle_1;
+        break;
+	}
+
+	if (new_sprite == noone) {
+	    new_sprite = spr_idle_1;
+	}
+
+	// APPLY SPRITE
+	if (sprite_index != new_sprite) {
+	    sprite_index = new_sprite;
+	    image_index = 0;
+}
+
+// --- SPLASH ---
+if (in_water && !was_in_water && vspeed > 1) {
+
+    audio_play_sound(snd_splash2, 1, false);
+
+    flip_count = floor(abs(last_rotation) / 180);
+
+    var charge_power = last_charge / max_charge;
+    var splash_power = lerp(50, 200, charge_power);
+
+    // --- POPUP TEXT ---
+var base_y = y - 40;
+
+// flip label
+if (flip_count > 0) {
+    var popup_flip = instance_create_layer(x, base_y, "Instances", obj_flip_labels);
+    popup_flip.text = string(flip_count) + "x FLIP";
+    base_y -= 25;
+}
+
+// trick
+if (performed_cheesecutter) {
+    var popup_trick = instance_create_layer(x, base_y, "Instances", obj_flip_labels);
+    popup_trick.text = "CHEESECUTTER";
+    base_y -= 25;
+}
+
+// tuck
+if (tuck_quality != "none") {
+
+    var msg = "";
+
+    switch (tuck_quality) {
+        case "perfect": msg = "PERFECT TUCK"; break;
+        case "good": msg = "GOOD TUCK"; break;
+        case "ok": msg = "OK TUCK"; break;
+        case "late": msg = "TOO LATE"; break;
+        case "too_early": msg = "TOO EARLY"; break;
+        default: msg = "BAD TUCK"; break;
     }
 
-    instance_destroy();
+    var popup_tuck = instance_create_layer(x, base_y, "Instances", obj_flip_labels);
+    popup_tuck.text = msg;
+}
+
+    var count = clamp(round(splash_power / 25), 8, 40);
+
+    highest_splash = noone;
+    var highest_y = 999999;
+
+    repeat (count) {
+        var splash = instance_create_layer(x, y, "Instances", obj_splash);
+
+        splash.vspeed = -random_range(5, 10);
+
+        if (splash.y < highest_y) {
+            highest_y = splash.y;
+            highest_splash = splash;
+        }
+    }
+
+    camera_target = highest_splash;
+    camera_follow = true;
+
+    // --- TRIGGER RESPAWN ---
+    respawn_timer = 15;
+
+    vspeed = 0;
+    hspeed = 0;
+	
+	show_debug_message("ROTATION: " + string(rotation));
+	show_debug_message("FLIP COUNT: " + string(flip_count));
 }
