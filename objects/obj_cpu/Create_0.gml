@@ -71,3 +71,8 @@ camera_follow = false;
 has_jumped = false;
 
 last_rotation = 0;
+
+water_frames = 0;
+
+cpu_score = 0;
+cpu_last_score = 0;
