@@ -1,15 +1,6 @@
-// SPAWN CPU DURING CPU TURN (DO THIS FIRST)----- (DISABLED) -----
-//if (global.game_phase == "cpu" && !instance_exists(obj_cpu)) {
-    //instance_create_layer(spawn_x, spawn_y, "Instances", obj_cpu);
-//}
+if (!player_turn_started) {
 
-global.game_phase = "player";
-
-// THEN handle player visibility
-ivisible = true;
-
-// Detect when player turn starts
-if (global.game_phase == "player" && !player_turn_started) {
+    player_turn_started = true;
 
     // Reset position
     x = spawn_x;
@@ -491,7 +482,7 @@ camera_follow = true;
 }
 
     // --- RESET ---
-if (global.game_phase == "player" && !player_turn_started) {
+if (!player_turn_started) {
 
     player_turn_started = true;
 

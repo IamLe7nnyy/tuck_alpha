@@ -66,7 +66,7 @@ var cam = view_camera[0];
 camera_target = noone;
 camera_follow = false;
 
-// --- TURN PHASES ---
+// --- TURN PHASES --- (This is for future)
 global.game_phase = "cpu";
 
 global.cpu_attempt = 0;
@@ -90,5 +90,5 @@ water_sound = audio_play_sound(snd_water, 1, true);
 music_sound = audio_play_sound(snd_french_letter, 1, true);
 
 // --- SET DEFAULT VOLUME ---
-audio_sound_gain(water_sound, 0.15, 0);   // quieter ambience
-audio_sound_gain(music_sound, 0.4, 0);   // louder music
+audio_sound_gain(water_sound, 0.0, 0);   // make it 0.15
+audio_sound_gain(music_sound, 0.0, 0);   // make it 0.4

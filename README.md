@@ -6,6 +6,13 @@ This guide will help you work on our GameMaker project **as a team** using GitHu
 
 You don’t need to be a coder to follow this 👍
 
+# Open Teminal
+
+## Git Bash Terminal
+
+In the top menus oppen terminal then new terminal.
+make sure it is Git bash or Bash. if not next to the Plus sign is a down arrow click that on click on git bash
+
 ---
 
 # 🚀 FIRST TIME SETUP (ONLY DO ONCE)
