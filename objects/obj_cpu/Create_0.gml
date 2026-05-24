@@ -76,3 +76,5 @@ water_frames = 0;
 
 cpu_score = 0;
 cpu_last_score = 0;
+
+air_action = "none";
