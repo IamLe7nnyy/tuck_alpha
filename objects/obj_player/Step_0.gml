@@ -1,7 +1,6 @@
-// SPAWN CPU DURING CPU TURN (DO THIS FIRST)----- (DISABLED) -----
-//if (global.game_phase == "cpu" && !instance_exists(obj_cpu)) {
-    //instance_create_layer(spawn_x, spawn_y, "Instances", obj_cpu);
-//}
+if (obj_score.turn != "player") {
+    exit;
+}
 
 global.game_phase = "player";
 

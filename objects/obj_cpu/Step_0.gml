@@ -1,3 +1,7 @@
+if (obj_score.turn != "cpu") {
+    exit;
+}
+
 // --- RESPAWN SYSTEM ---
 if (respawn_timer > 0) {
 
