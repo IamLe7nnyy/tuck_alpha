@@ -38,12 +38,14 @@
   "resources":[
     {"id":{"name":"obj_cpu","path":"objects/obj_cpu/obj_cpu.yy",},},
     {"id":{"name":"obj_flip_labels","path":"objects/obj_flip_labels/obj_flip_labels.yy",},},
+    {"id":{"name":"obj_menu","path":"objects/obj_menu/obj_menu.yy",},},
     {"id":{"name":"obj_platform","path":"objects/obj_platform/obj_platform.yy",},},
     {"id":{"name":"obj_player","path":"objects/obj_player/obj_player.yy",},},
     {"id":{"name":"obj_score","path":"objects/obj_score/obj_score.yy",},},
     {"id":{"name":"obj_splash","path":"objects/obj_splash/obj_splash.yy",},},
     {"id":{"name":"obj_tuck_success","path":"objects/obj_tuck_success/obj_tuck_success.yy",},},
     {"id":{"name":"obj_water","path":"objects/obj_water/obj_water.yy",},},
+    {"id":{"name":"Menu","path":"rooms/Menu/Menu.yy",},},
     {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
     {"id":{"name":"snd_french_letter","path":"sounds/snd_french_letter/snd_french_letter.yy",},},
     {"id":{"name":"snd_splash","path":"sounds/snd_splash/snd_splash.yy",},},
@@ -75,6 +77,7 @@
   "resourceVersion":"2.0",
   "RoomOrderNodes":[
     {"roomId":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
+    {"roomId":{"name":"Menu","path":"rooms/Menu/Menu.yy",},},
   ],
   "templateType":null,
   "TextureGroups":[

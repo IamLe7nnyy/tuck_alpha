@@ -6,11 +6,13 @@
   "ResourceOrderSettings":[
     {"name":"obj_cpu","order":6,"path":"objects/obj_cpu/obj_cpu.yy",},
     {"name":"obj_flip_labels","order":5,"path":"objects/obj_flip_labels/obj_flip_labels.yy",},
+    {"name":"obj_menu","order":8,"path":"objects/obj_menu/obj_menu.yy",},
     {"name":"obj_platform","order":1,"path":"objects/obj_platform/obj_platform.yy",},
     {"name":"obj_score","order":7,"path":"objects/obj_score/obj_score.yy",},
     {"name":"obj_splash","order":3,"path":"objects/obj_splash/obj_splash.yy",},
     {"name":"obj_tuck_success","order":4,"path":"objects/obj_tuck_success/obj_tuck_success.yy",},
     {"name":"obj_water","order":2,"path":"objects/obj_water/obj_water.yy",},
+    {"name":"Menu","order":1,"path":"rooms/Menu/Menu.yy",},
     {"name":"snd_french_letter","order":2,"path":"sounds/snd_french_letter/snd_french_letter.yy",},
     {"name":"snd_splash","order":1,"path":"sounds/snd_splash/snd_splash.yy",},
     {"name":"snd_splash2","order":3,"path":"sounds/snd_splash2/snd_splash2.yy",},
