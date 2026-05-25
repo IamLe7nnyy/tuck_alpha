@@ -1,6 +1,14 @@
-if (!player_turn_started) {
+if (obj_score.turn != "player") {
+    exit;
+}
 
-    player_turn_started = true;
+global.game_phase = "player";
+
+// THEN handle player visibility
+ivisible = true;
+
+// Detect when player turn starts
+if (global.game_phase == "player" && !player_turn_started) {
 
     // Reset position
     x = spawn_x;
@@ -482,7 +490,7 @@ camera_follow = true;
 }
 
     // --- RESET ---
-if (!player_turn_started) {
+if (global.game_phase == "player" && !player_turn_started) {
 
     player_turn_started = true;
 
