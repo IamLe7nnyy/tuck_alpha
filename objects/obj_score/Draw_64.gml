@@ -8,5 +8,6 @@ draw_text(20, 20, "PLAYER SCORE: " + string(player_score));
 draw_text(20, 50, "PLAYER LAST: " + string(player_last));
 
 // CPU
-draw_text(20, 100, "CPU SCORE: " + string(cpu_score));
-draw_text(20, 130, "CPU LAST: " + string(cpu_last));
+draw_text(20, 80, "CPU SCORE: " + string(cpu_score));
+draw_text(20, 110, "CPU LAST: " + string(cpu_last));
+
