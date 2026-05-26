@@ -12,7 +12,7 @@ if (respawn_timer > 0) {
 
     if (respawn_timer > 0) exit;
 
-    // --- CAMERA RESET (MATCH PLAYER) ---
+    // --- CAMERA RESET ---
     camera_follow = false;
     camera_target = noone;
 
@@ -27,6 +27,7 @@ if (respawn_timer > 0) {
 
     charging = false;
     charge = 0;
+    cpu_release_threshold = 0;
 
     rotation = 0;
     rotation_speed = 0;
@@ -38,6 +39,11 @@ if (respawn_timer > 0) {
 
     performed_cheesecutter = false;
     trick_multiplier = 1;
+
+    // reset AI decisions
+    cpu_will_cheesecut = false;
+    cpu_rotate_dir = 0;
+    cpu_tuck_y = 0;
 
     state = "idle";
     image_index = 0;
@@ -66,29 +72,14 @@ if (on_ground) {
 }
 
 
-// --- RELEASE JUMP ---
-if (charging && charge > irandom_range(max_charge * 0.4, max_charge * 0.9)) {
-    crouch = false;
+// --- SET RELEASE THRESHOLD ONCE ---
+if (charging && cpu_release_threshold == 0) {
+    cpu_release_threshold = irandom_range(max_charge * 0.4, max_charge * 0.9);
 }
 
-
-// --- AIR CONTROL ---
-if (!on_ground) {
-
-    last_rotation = rotation;
-
-    if (abs(hspeed) < 0.1) {
-        move = choose(-1, 1);
-    }
-
-    if (random(1) < 0.02 && !performed_cheesecutter) {
-        performed_cheesecutter = true;
-        trick_multiplier = 2;
-    }
-
-    if (tuck_quality == "none" && random(1) < 0.03) {
-        tuck_quality = choose("bad", "ok", "good", "perfect");
-    }
+// --- RELEASE JUMP ---
+if (charging && charge > cpu_release_threshold) {
+    crouch = false;
 }
 
 
@@ -143,9 +134,6 @@ if (in_water) {
 // --- JUMP ---
 if (charging && !crouch) {
 
-    performed_cheesecutter = false;
-    trick_multiplier = 1;
-
     var charge_power = charge / max_charge;
 
     vspeed = -lerp(1, 6, charge_power);
@@ -156,21 +144,74 @@ if (charging && !crouch) {
     charging = false;
     charge = 0;
     on_ground = false;
+    cpu_release_threshold = 0;
 
     tuck_quality = "none";
     air_action = choose("frontflip", "backflip", "tuck", "none");
+
+    // --- DECIDE ALL AI TRICKS AT JUMP TIME ---
+    cpu_will_cheesecut = (random(1) < 0.3);   // 30% chance of cheesecutter
+    cpu_rotate_dir = choose(-1, 0, 0, 1);     // 0 = no spin, weighted so spinning is less common
+    trick_multiplier = 1;
+    performed_cheesecutter = false;
+
+    // decide tuck y position based on water location
+    var water = instance_nearest(x, y, obj_water);
+    if (water != noone) {
+        var total_height = 100;
+        var zone_height = total_height / 2;
+        var zone_offset = 120;
+        var top_zone = water.bbox_top - total_height - zone_offset;
+        // pick a random zone to tuck in — same zones as player
+        var zone_pick = irandom(4);
+        cpu_tuck_y = top_zone + (zone_height * zone_pick) + (zone_height * 0.5);
+        // assign tuck quality based on chosen zone
+        switch (zone_pick) {
+            case 0: tuck_quality = "ok";     break;
+            case 1: tuck_quality = "good";   break;
+            case 2: tuck_quality = "perfect"; break;
+            case 3: tuck_quality = "good";   break;
+            case 4: tuck_quality = "ok";     break;
+        }
+    } else {
+        cpu_tuck_y = 99999;
+        tuck_quality = "bad";
+    }
+
+    state = "jump";
+}
+
+
+// --- AIR CONTROL ---
+if (!on_ground) {
+
+    // apply cheesecutter once in air
+    if (cpu_will_cheesecut && !performed_cheesecutter) {
+        performed_cheesecutter = true;
+        trick_multiplier = 2;
+        cpu_will_cheesecut = false;  // only apply once
+    }
+
+    // tuck when CPU reaches the decided y position
+    if (air_action == "tuck" && y >= cpu_tuck_y && tuck_quality != "none") {
+        // tuck already handled at jump time — nothing extra needed
+    }
 }
 
 
 // --- GRAVITY ---
 if (!on_ground) {
 
-    var rotate_input = move;
-    var target_speed = rotate_input * 6;
+    // rotation matches player exactly — driven by cpu_rotate_dir
+    var target_speed = cpu_rotate_dir * 6;
     rotation_speed = lerp(rotation_speed, target_speed, 0.2);
 
+    // flip actions add rotation nudge — same as player
     if (air_action == "frontflip") rotation_speed += 1.5;
-    if (air_action == "backflip") rotation_speed -= 1.5;
+    if (air_action == "backflip")  rotation_speed -= 1.5;
+
+    // same clamp as player
+    rotation_speed = clamp(rotation_speed, -6, 6);
 
     rotation -= rotation_speed;
     image_angle = rotation;
@@ -183,7 +224,7 @@ if (!on_ground) {
 y += vspeed;
 
 
-// 🔥 CAPTURE TRUE IMPACT SPEED (FIX)
+// --- CAPTURE IMPACT SPEED ---
 if (!in_water) {
     impact_vspeed = vspeed;
 }
@@ -206,143 +247,126 @@ if (untuck_timer > 0) untuck_timer--;
 
 
 // --- STATE ---
-if (untuck_timer > 0) state = "untuck";
-else if (charging) state = "crouch";
+if (untuck_timer > 0) {
+    state = "untuck";
+}
 else if (!on_ground) {
-
     if (performed_cheesecutter) state = "cheesecutter";
     else {
         switch (air_action) {
-            case "tuck": state = "tuck"; break;
-            case "backflip": state = "backflip"; break;
+            case "tuck":      state = "tuck";      break;
+            case "backflip":  state = "backflip";  break;
             case "frontflip": state = "frontflip"; break;
-            default: state = "jump";
+            default:          state = "jump";
         }
     }
 }
-else if (abs(hspeed) > 0.5) state = "walk";
-else state = "idle";
+else if (charging) {
+    state = "crouch";
+}
+else if (abs(hspeed) > 0.5) {
+    state = "walk";
+}
+else {
+    state = "idle";
+}
 
 
 // --- ANIMATION ---
 var new_sprite = spr_idle_1;
 
 switch (state) {
-    case "idle": new_sprite = spr_idle_1; image_speed = 0.1; break;
-    case "walk": new_sprite = spr_walk_1; image_speed = 0.3; break;
-    case "jump": new_sprite = spr_jump_1; break;
-    case "crouch": new_sprite = spr_crouch_1; break;
-    case "tuck": new_sprite = spr_tuck_1; break;
-    case "untuck": new_sprite = spr_untuck_1; break;
-    case "backflip": new_sprite = spr_backflip_1; break;
-    case "frontflip": new_sprite = spr_frontflip_1; break;
-    case "cheesecutter": new_sprite = spr_cheesecutter_1; break;
+    case "idle":         new_sprite = spr_idle_1;         image_speed = 0.1; break;
+    case "walk":         new_sprite = spr_walk_1;         image_speed = 0.3; break;
+    case "jump":         new_sprite = spr_jump_1;         image_speed = 0;   break;
+    case "crouch":       new_sprite = spr_crouch_1;       image_speed = 0.2; break;
+    case "tuck":         new_sprite = spr_tuck_1;         image_speed = 0.8; break;
+    case "untuck":       new_sprite = spr_untuck_1;       image_speed = 0.8; break;
+    case "backflip":     new_sprite = spr_backflip_1;     image_speed = 0.8; break;
+    case "frontflip":    new_sprite = spr_frontflip_1;    image_speed = 0.8; break;
+    case "cheesecutter": new_sprite = spr_cheesecutter_1; image_speed = 0.8; break;
 }
 
 if (new_sprite == noone) new_sprite = spr_idle_1;
 
 if (sprite_index != new_sprite) {
     sprite_index = new_sprite;
-    image_index = 0;
+    image_index  = 0;
 }
 
 
 // --- SPLASH ---
 if (in_water && !was_in_water) {
-
     audio_play_sound(snd_splash2, 1, false);
-
     flip_count = floor((abs(image_angle) + 90) / 360);
-
     var landing_angle = (image_angle mod 360 + 360) mod 360;
     var landing_type = "clean";
-
     if (landing_angle > 135 && landing_angle < 225) landing_type = "back_slap";
     else if ((landing_angle > 45 && landing_angle < 135) || (landing_angle > 225 && landing_angle < 315)) landing_type = "belly_flop";
-
     var flip_type = image_angle > 0 ? "BACKFLIP" : "FRONTFLIP";
-
     if (flip_count == 0) last_flip_label = "";
     else if (flip_count == 1) last_flip_label = flip_type;
     else if (flip_count == 2) last_flip_label = "DOUBLE " + flip_type;
     else last_flip_label = string(flip_count) + "x " + flip_type;
-
     var base_y = y - 40;
-
     if (landing_type != "clean") {
         var popup = instance_create_layer(x, base_y, layer, obj_flip_labels);
         popup.text = landing_type == "belly_flop" ? "BELLY FLOP" : "BACK SLAP";
         popup.colour = c_red;
         base_y -= 25;
     }
-
     if (flip_count > 0) {
         var popup = instance_create_layer(x, base_y, layer, obj_flip_labels);
         popup.text = last_flip_label;
         base_y -= 25;
     }
-
     if (performed_cheesecutter) {
         var popup = instance_create_layer(x, base_y, layer, obj_flip_labels);
         popup.text = "CHEESECUTTER";
         base_y -= 25;
     }
-
     if (tuck_quality != "none") {
         var popup = instance_create_layer(x, base_y, layer, obj_flip_labels);
         popup.text = string_upper(tuck_quality) + " TUCK";
     }
-
     var charge_power = last_charge / max_charge;
-
     var base_power = lerp(50, 200, charge_power);
-    var impact_power = abs(impact_vspeed) * 20; // 🔥 FIXED
+    var impact_power = abs(vspeed) * 20;
     var flip_bonus = flip_count * 50;
-
     var zone_bonus = 0;
-
     switch (tuck_quality) {
         case "perfect": zone_bonus = 150; break;
-        case "good": zone_bonus = 80; break;
-        case "ok": zone_bonus = 30; break;
-        case "late": zone_bonus = -20; break;
+        case "good":    zone_bonus = 80;  break;
+        case "ok":      zone_bonus = 30;  break;
+        case "late":    zone_bonus = -20; break;
         case "too_early": zone_bonus = -30; break;
-        default: zone_bonus = -50; break;
+        default:        zone_bonus = -50; break;
     }
-
     var raw_power = base_power + zone_bonus + impact_power + flip_bonus;
-
+    if (landing_type == "back_slap")  raw_power *= 0.3;
+    if (landing_type == "belly_flop") raw_power *= 0.15;
     var splash_power = raw_power * trick_multiplier;
-    splash_power = clamp(splash_power, 50, 1300);
-
+    splash_power = splash_power * 0.85;
+    splash_power = clamp(splash_power, 50, 600);
     cpu_last_score = cpu_score;
     cpu_score = round(splash_power);
-
     var count = clamp(round(splash_power / 25), 8, 40);
-
     var highest_splash = noone;
     var highest_y = 999999;
-
     repeat (count) {
         var splash = instance_create_layer(x, y - 5, layer, obj_splash);
-
         splash.power = splash_power;
-
         splash.image_xscale = (splash_power / 120) * random_range(0.6, 1.2);
         splash.image_yscale = splash.image_xscale;
-
         splash.hspeed = random_range(-4, 4);
         splash.vspeed = -random_range(5, 10) * (splash_power / 140);
-
         if (splash.y < highest_y) {
             highest_y = splash.y;
             highest_splash = splash;
         }
     }
-
     camera_target = highest_splash;
     camera_follow = true;
-
     vspeed = 0;
     hspeed = 0;
 }

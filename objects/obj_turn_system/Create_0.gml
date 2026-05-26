@@ -23,10 +23,10 @@ player_best = 0;
 max_attempts = 3;
 
 // spawn positions
-cpu_spawn_x    = 300;
-cpu_spawn_y    = 100;
-player_spawn_x = 300;
-player_spawn_y = 100;
+cpu_spawn_x    = 250;
+cpu_spawn_y    = 750;
+player_spawn_x = 250;
+player_spawn_y = 1000;
 
 // score display helpers
 player_score = 0;

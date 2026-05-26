@@ -7,6 +7,6 @@ if (!variable_global_exists("round")) {
 
 global.ante       = 1;
 global.round      = 1;
-global.run_active = false;
+global.run_active = true;
 
-room_goto(Room_GameOver);
+room_goto(Room_Menu);
