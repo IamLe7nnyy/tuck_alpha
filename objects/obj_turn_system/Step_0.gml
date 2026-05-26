@@ -1,57 +1,82 @@
-// --- SWITCH TO PLAYER ---
-if (keyboard_check_pressed(ord("T"))) {
+// ============================================================
+//  CPU TURN
+// ============================================================
+if (turn == "cpu" && instance_exists(obj_cpu)) {
 
-    turn = "player";
+    // obj_cpu sets respawn_timer = 40 the moment it hits the water.
+    // We catch it on that exact frame to record the score.
+    if (obj_cpu.respawn_timer == 40 && !cpu_scored_this_attempt) {
 
-    if (!instance_exists(obj_player)) {
+        cpu_scored_this_attempt = true;          // don't double-count
+        cpu_attempt++;
 
-        var player = instance_create_layer(player_spawn_x, player_spawn_y, "Instances", obj_player);
+        var this_score = obj_cpu.cpu_score;
+        cpu_last  = this_score;
+        cpu_best  = max(cpu_best, this_score);
 
-        var safety = 0;
-        while (!place_meeting(player.x, player.y + 1, obj_platform) && safety < 1000) {
-            player.y += 1;
-            safety++;
+        if (cpu_attempt >= max_attempts) {
+
+            // --- CPU DONE: spawn player ---
+            turn = "player";
+
+            instance_destroy(cpu);   // hide CPU while player goes
+
+            var player = instance_create_layer(player_spawn_x, player_spawn_y,
+                                               "Instances", obj_player);
+            var safety = 0;
+            while (!place_meeting(player.x, player.y + 1, obj_platform) && safety < 200) {
+                player.y += 1;
+                safety++;
+            }
+            player.vspeed   = 0;
+            player.hspeed   = 0;
+            player.on_ground = true;
+
+        } else {
+            // reset flag so next attempt can be recorded
+            cpu_scored_this_attempt = false;
         }
+    }
 
-        player.vspeed = 0;
-        player.hspeed = 0;
-        player.on_ground = true;
+    // mirror score for HUD
+    if (instance_exists(obj_cpu)) {
+        cpu_score = obj_cpu.cpu_score;
+        cpu_last  = obj_cpu.cpu_last_score;
     }
 }
 
 
-// --- SWITCH TO CPU ---
-if (keyboard_check_pressed(ord("Y"))) {
+// ============================================================
+//  PLAYER TURN
+// ============================================================
+if (turn == "player" && instance_exists(obj_player)) {
 
-    turn = "cpu";
+    // obj_player sets respawn_timer = 20 when the splash settles
+    if (obj_player.respawn_timer == 20 && !player_scored_this_attempt) {
 
-    if (cpu != noone) {
+        player_scored_this_attempt = true;
+        player_attempt++;
 
-        cpu.x = cpu_spawn_x;
-        cpu.y = cpu_spawn_y;
+        var this_score = obj_player.current_score;
+        player_last  = this_score;
+        player_best  = max(player_best, this_score);
 
-        var safety = 0;
-        while (!place_meeting(cpu.x, cpu.y + 1, obj_platform) && safety < 1000) {
-            cpu.y += 1;
-            safety++;
+        if (player_attempt >= max_attempts) {
+            turn = "results";
+        } else {
+            player_scored_this_attempt = false;
         }
-
-        cpu.vspeed = 0;
-        cpu.hspeed = 0;
-        cpu.on_ground = true;
     }
-}
 
-
-// --- DEBUG ---
-draw_text(20, 20, "TURN: " + string_upper(turn));
-
-if (instance_exists(obj_player)) {
+    // mirror score for HUD
     player_score = obj_player.current_score;
-    player_last = obj_player.last_splash_score;
+    player_last  = obj_player.last_splash_score;
 }
 
-if (instance_exists(obj_cpu)) {
-    cpu_score = obj_cpu.cpu_score;
-    cpu_last = obj_cpu.cpu_last_score;
+
+// ============================================================
+//  RESULTS: wait for any key, then show winner
+// ============================================================
+if (turn == "results") {
+    // nothing extra needed here; Draw GUI shows the winner screen
 }

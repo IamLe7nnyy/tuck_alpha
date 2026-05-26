@@ -8,3 +8,7 @@ var cy = display_get_gui_height() / 2;
 
 draw_text(cx, cy - 40, "TUCK");
 draw_text(cx, cy + 20, "PRESS ENTER TO PLAY");
+
+draw_set_color(c_red);
+draw_set_halign(fa_center);
+draw_text(display_get_gui_width()/2, 10, "MENU IS ACTIVE");
