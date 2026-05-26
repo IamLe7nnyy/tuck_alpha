@@ -1,4 +1,4 @@
-if (obj_score.turn != "cpu") {
+if (obj_turn_system.turn != "cpu") {
     exit;
 }
 
@@ -175,7 +175,7 @@ if (!on_ground) {
     rotation -= rotation_speed;
     image_angle = rotation;
 
-    vspeed += in_water ? gravity * 3 : gravity;
+    vspeed += in_water ? grav * 3 : grav;
 }
 
 

@@ -4,7 +4,8 @@ hspeed = 0;
 move_speed = 4;
 
 // --- GRAVITY ---
-gravity = 0.1;
+gravity = 0;
+grav = 0.1;
 
 // --- JUMP ---
 jump_strength = -0.2;

@@ -1,4 +1,4 @@
-if (obj_score.turn != "player") {
+if (obj_turn_system.turn != "player") {
     exit;
 }
 

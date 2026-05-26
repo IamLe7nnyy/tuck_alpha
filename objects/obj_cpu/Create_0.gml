@@ -8,7 +8,8 @@ hspeed = 0;
 move_speed = 4;
 
 // --- GRAVITY ---
-gravity = 0.1;
+gravity = 0;
+grav = 0.1;
 
 // --- JUMP ---
 jump_strength = -0.2;
@@ -78,3 +79,5 @@ cpu_score = 0;
 cpu_last_score = 0;
 
 air_action = "none";
+
+impact_vspeed = 0;
