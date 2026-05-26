@@ -1,3 +1,7 @@
+is_cpu = true;
+
+move = 0;
+
 // --- MOVEMENT ---
 vspeed = 0;
 hspeed = 0;
@@ -44,9 +48,6 @@ current_score = 0;
 last_splash_score = 0;
 
 // --- AIR ROTATION ---
-rotation = 0;
-rotation_speed = 0;
-
 tuck_quality = "none";
 
 // --- ROTATION TRACKING ---
@@ -66,37 +67,14 @@ var cam = view_camera[0];
 camera_target = noone;
 camera_follow = false;
 
-// --- TURN PHASES --- (This is for future)
-global.game_phase = "cpu";
+// --- one jump per attempt ---
+has_jumped = false;
 
-global.cpu_attempt = 0;
-global.player_attempt = 0;
+last_rotation = 0;
 
-global.cpu_best_score = 0;
-global.player_best_score = 0;
+water_frames = 0;
 
-global.max_attempts = 3;
-
-player_turn_started = false;
-
-cpu_crouch = 0;
-
-cpu_move = 0;
-cpu_jump = 0;
-cpu_crouch = 0;
-
-//SOUND
-water_sound = audio_play_sound(snd_water, 1, true);
-music_sound = audio_play_sound(snd_french_letter, 1, true);
-
-// --- SET DEFAULT VOLUME ---
-audio_sound_gain(water_sound, 0.0, 0);   // make it 0.15
-audio_sound_gain(music_sound, 0.0, 0);   // make it 0.4
-
-//CPU RESET
-cpu_active = true;   // toggle this ON/OFF
-cpu_reset = true;   // trigger reset manually
-
-move = 0;
+cpu_score = 0;
+cpu_last_score = 0;
 
 air_action = "none";
