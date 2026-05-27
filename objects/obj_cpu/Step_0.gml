@@ -12,13 +12,6 @@ if (respawn_timer > 0) {
 
     if (respawn_timer > 0) exit;
 
-    // --- CAMERA RESET ---
-    camera_follow = false;
-    camera_target = noone;
-
-    var cam = view_camera[0];
-    camera_set_view_pos(cam, 0, 738);
-
     x = spawn_x;
     y = spawn_y;
 
@@ -149,11 +142,18 @@ if (charging && !crouch) {
     tuck_quality = "none";
     air_action = choose("frontflip", "backflip", "tuck", "none");
 
-    // --- DECIDE ALL AI TRICKS AT JUMP TIME ---
-    cpu_will_cheesecut = (random(1) < 0.3);   // 30% chance of cheesecutter
-    cpu_rotate_dir = choose(-1, 0, 0, 1);     // 0 = no spin, weighted so spinning is less common
-    trick_multiplier = 1;
-    performed_cheesecutter = false;
+// --- DECIDE ALL AI TRICKS AT JUMP TIME ---
+cpu_will_cheesecut = (random(1) < 0.3);
+trick_multiplier = 1;
+performed_cheesecutter = false;
+
+// rotation direction driven by air_action — not separate
+switch (air_action) {
+    case "frontflip": cpu_rotate_dir = -1; break;  // spins one way
+    case "backflip":  cpu_rotate_dir = 1;  break;  // spins other way
+    case "tuck":      cpu_rotate_dir = 0;  break;  // no spin during tuck
+    default:          cpu_rotate_dir = 0;  break;  // no spin on basic jump
+}
 
     // decide tuck y position based on water location
     var water = instance_nearest(x, y, obj_water);
@@ -185,16 +185,12 @@ if (charging && !crouch) {
 // --- AIR CONTROL ---
 if (!on_ground) {
 
-    // apply cheesecutter once in air
-    if (cpu_will_cheesecut && !performed_cheesecutter) {
+    // only apply cheesecutter flag halfway through the jump
+    // this stops it immediately overriding the jump animation
+    if (cpu_will_cheesecut && !performed_cheesecutter && vspeed > 0) {
         performed_cheesecutter = true;
         trick_multiplier = 2;
-        cpu_will_cheesecut = false;  // only apply once
-    }
-
-    // tuck when CPU reaches the decided y position
-    if (air_action == "tuck" && y >= cpu_tuck_y && tuck_quality != "none") {
-        // tuck already handled at jump time — nothing extra needed
+        cpu_will_cheesecut = false;
     }
 }
 
@@ -205,10 +201,6 @@ if (!on_ground) {
     // rotation matches player exactly — driven by cpu_rotate_dir
     var target_speed = cpu_rotate_dir * 6;
     rotation_speed = lerp(rotation_speed, target_speed, 0.2);
-
-    // flip actions add rotation nudge — same as player
-    if (air_action == "frontflip") rotation_speed += 1.5;
-    if (air_action == "backflip")  rotation_speed -= 1.5;
 
     // same clamp as player
     rotation_speed = clamp(rotation_speed, -6, 6);
@@ -276,15 +268,78 @@ else {
 var new_sprite = spr_idle_1;
 
 switch (state) {
-    case "idle":         new_sprite = spr_idle_1;         image_speed = 0.1; break;
-    case "walk":         new_sprite = spr_walk_1;         image_speed = 0.3; break;
-    case "jump":         new_sprite = spr_jump_1;         image_speed = 0;   break;
-    case "crouch":       new_sprite = spr_crouch_1;       image_speed = 0.2; break;
-    case "tuck":         new_sprite = spr_tuck_1;         image_speed = 0.8; break;
-    case "untuck":       new_sprite = spr_untuck_1;       image_speed = 0.8; break;
-    case "backflip":     new_sprite = spr_backflip_1;     image_speed = 0.8; break;
-    case "frontflip":    new_sprite = spr_frontflip_1;    image_speed = 0.8; break;
-    case "cheesecutter": new_sprite = spr_cheesecutter_1; image_speed = 0.8; break;
+    case "idle":
+        new_sprite = spr_idle_1;
+        image_speed = 0.1;
+        break;
+
+    case "walk":
+        new_sprite = spr_walk_1;
+        image_speed = 0.3;
+        break;
+
+    case "jump":
+        new_sprite = spr_jump_1;
+        image_speed = 0.4;
+        if (image_index >= image_number - 1) {
+            image_index = image_number - 1;
+            image_speed = 0;
+        }
+        break;
+
+    case "crouch":
+        new_sprite = spr_crouch_1;
+        image_speed = 0.2;
+        if (image_index >= image_number - 1) {
+            image_index = image_number - 1;
+            image_speed = 0;
+        }
+        break;
+
+    case "tuck":
+        new_sprite = spr_tuck_1;
+        image_speed = 0.8;
+        if (image_index >= image_number - 1) {
+            image_index = image_number - 1;
+            image_speed = 0;
+        }
+        break;
+
+    case "untuck":
+        new_sprite = spr_untuck_1;
+        image_speed = 0.8;
+        if (image_index >= image_number - 1) {
+            image_index = image_number - 1;
+            image_speed = 0;
+        }
+        break;
+
+    case "backflip":
+        new_sprite = spr_backflip_1;
+        image_speed = 0.8;
+        if (image_index >= image_number - 1) {
+            image_index = image_number - 1;
+            image_speed = 0;
+        }
+        break;
+
+    case "frontflip":
+        new_sprite = spr_frontflip_1;
+        image_speed = 0.8;
+        if (image_index >= image_number - 1) {
+            image_index = image_number - 1;
+            image_speed = 0;
+        }
+        break;
+
+    case "cheesecutter":
+        new_sprite = spr_cheesecutter_1;
+        image_speed = 0.8;
+        if (image_index >= image_number - 1) {
+            image_index = image_number - 1;
+            image_speed = 0;
+        }
+        break;
 }
 
 if (new_sprite == noone) new_sprite = spr_idle_1;
@@ -298,16 +353,19 @@ if (sprite_index != new_sprite) {
 // --- SPLASH ---
 if (in_water && !was_in_water) {
     audio_play_sound(snd_splash2, 1, false);
-    flip_count = floor((abs(image_angle) + 90) / 360);
+	dive_complete = true;
+    flip_count = floor((abs(rotation) + 90) / 360);
     var landing_angle = (image_angle mod 360 + 360) mod 360;
     var landing_type = "clean";
     if (landing_angle > 135 && landing_angle < 225) landing_type = "back_slap";
     else if ((landing_angle > 45 && landing_angle < 135) || (landing_angle > 225 && landing_angle < 315)) landing_type = "belly_flop";
     var flip_type = image_angle > 0 ? "BACKFLIP" : "FRONTFLIP";
-    if (flip_count == 0) last_flip_label = "";
-    else if (flip_count == 1) last_flip_label = flip_type;
-    else if (flip_count == 2) last_flip_label = "DOUBLE " + flip_type;
-    else last_flip_label = string(flip_count) + "x " + flip_type;
+if (flip_count == 0)      last_flip_label = "";
+else if (flip_count == 1) last_flip_label = flip_type;
+else if (flip_count == 2) last_flip_label = "DOUBLE " + flip_type;
+else if (flip_count == 3) last_flip_label = "TRIPLE " + flip_type;
+else if (flip_count == 4) last_flip_label = "QUADRUPLE " + flip_type;
+else                      last_flip_label = string(flip_count) + "x " + flip_type;
     var base_y = y - 40;
     if (landing_type != "clean") {
         var popup = instance_create_layer(x, base_y, layer, obj_flip_labels);
@@ -329,32 +387,48 @@ if (in_water && !was_in_water) {
         var popup = instance_create_layer(x, base_y, layer, obj_flip_labels);
         popup.text = string_upper(tuck_quality) + " TUCK";
     }
-    var charge_power = last_charge / max_charge;
-    var base_power = lerp(50, 200, charge_power);
-    var impact_power = abs(vspeed) * 20;
-    var flip_bonus = flip_count * 50;
-    var zone_bonus = 0;
-    switch (tuck_quality) {
-        case "perfect": zone_bonus = 150; break;
-        case "good":    zone_bonus = 80;  break;
-        case "ok":      zone_bonus = 30;  break;
-        case "late":    zone_bonus = -20; break;
-        case "too_early": zone_bonus = -30; break;
-        default:        zone_bonus = -50; break;
-    }
-    var raw_power = base_power + zone_bonus + impact_power + flip_bonus;
-    if (landing_type == "back_slap")  raw_power *= 0.3;
-    if (landing_type == "belly_flop") raw_power *= 0.15;
-    var splash_power = raw_power * trick_multiplier;
-    splash_power = splash_power * 0.85;
-    splash_power = clamp(splash_power, 50, 600);
-    cpu_last_score = cpu_score;
-    cpu_score = round(splash_power);
-    var count = clamp(round(splash_power / 25), 8, 40);
+// --- POWER ---
+var charge_power = last_charge / max_charge;
+var base_power   = lerp(50, 200, charge_power);
+var impact_power = abs(vspeed) * 20;
+var flip_bonus   = flip_count * 50;
+
+var zone_bonus = 0;
+switch (tuck_quality) {
+    case "perfect":   zone_bonus =  150; break;
+    case "good":      zone_bonus =   80; break;
+    case "ok":        zone_bonus =   30; break;
+    case "late":      zone_bonus =  -20; break;
+    case "too_early": zone_bonus =  -30; break;
+    default:          zone_bonus =  -50; break;
+}
+
+var raw_power = base_power + zone_bonus + impact_power + flip_bonus;
+var splash_power = raw_power * trick_multiplier;
+
+// --- LANDING PENALTIES ---
+if (landing_type == "back_slap")  splash_power *= 0.3;
+if (landing_type == "belly_flop") splash_power *= 0.15;
+
+splash_power = clamp(splash_power, 50, 1000);
+
+// --- SCORE ---
+var splash_score = round(splash_power);
+
+if (landing_type == "back_slap")  splash_score -= 300;
+if (landing_type == "belly_flop") splash_score -= 500;
+
+splash_score = max(splash_score, -300);
+
+cpu_last_score = cpu_score;
+cpu_score      = splash_score;
+
+var count = clamp(round(splash_power / 25), 8, 40);
+
     var highest_splash = noone;
     var highest_y = 999999;
     repeat (count) {
-        var splash = instance_create_layer(x, y - 5, layer, obj_splash);
+        var splash = instance_create_layer(x, y, "Instances", obj_splash);
         splash.power = splash_power;
         splash.image_xscale = (splash_power / 120) * random_range(0.6, 1.2);
         splash.image_yscale = splash.image_xscale;
@@ -365,30 +439,8 @@ if (in_water && !was_in_water) {
             highest_splash = splash;
         }
     }
-    camera_target = highest_splash;
-    camera_follow = true;
+obj_turn_system.camera_target = highest_splash;
+obj_turn_system.camera_follow = true;
     vspeed = 0;
     hspeed = 0;
-}
-
-
-// --- CAMERA FOLLOW ---
-if (camera_follow && instance_exists(camera_target)) {
-
-    var cam = view_camera[0];
-
-    var cam_x = camera_get_view_x(cam);
-    var cam_y = camera_get_view_y(cam);
-
-    var target_y = camera_target.y - 300;
-
-    cam_y = lerp(cam_y, target_y, 0.08);
-    cam_y = clamp(cam_y, 0, room_height - 768);
-
-    camera_set_view_pos(cam, cam_x, cam_y);
-
-    if (abs(camera_target.vspeed) < 0.5) {
-        camera_follow = false;
-        respawn_timer = 40;
-    }
 }

@@ -327,6 +327,8 @@ if (in_water && !was_in_water) {
 
     // 🔊 SPLASH SOUND (ONE SHOT)
     audio_play_sound(snd_splash2, 1, false);
+	
+	dive_complete = true; 
 
     // --- CALCULATE FLIPS FIRST ---
     flip_count = floor((abs(rotation) + 90) / 360);
@@ -404,51 +406,41 @@ if (in_water && !was_in_water) {
         popup_tuck.text = msg;
     }
 
-    // --- POWER ---
-    var charge_power = last_charge / max_charge;
-    var base_power = lerp(50, 200, charge_power);
-    var impact_power = abs(vspeed) * 20;
-    var flip_bonus = flip_count * 50;
+// --- POWER ---
+var charge_power = last_charge / max_charge;
+var base_power   = lerp(50, 200, charge_power);
+var impact_power = abs(vspeed) * 20;
+var flip_bonus   = flip_count * 50;
 
-    var zone_bonus = 0;
-    switch (tuck_quality) {
-        case "perfect": zone_bonus = 150; break;
-        case "good": zone_bonus = 80; break;
-        case "ok": zone_bonus = 30; break;
-        case "late": zone_bonus = -20; break;
-        case "too_early": zone_bonus = -30; break;
-        default: zone_bonus = -50; break;
-    }
+var zone_bonus = 0;
+switch (tuck_quality) {
+    case "perfect":   zone_bonus =  150; break;
+    case "good":      zone_bonus =   80; break;
+    case "ok":        zone_bonus =   30; break;
+    case "late":      zone_bonus =  -20; break;
+    case "too_early": zone_bonus =  -30; break;
+    default:          zone_bonus =  -50; break;
+}
 
-    var raw_power = base_power + zone_bonus + impact_power + flip_bonus;
+var raw_power = base_power + zone_bonus + impact_power + flip_bonus;
+var splash_power = raw_power * trick_multiplier;
 
-    splash_power = raw_power * trick_multiplier;
-    splash_power = clamp(splash_power, 50, 600);
+// --- LANDING PENALTIES ---
+if (landing_type == "back_slap")  splash_power *= 0.3;
+if (landing_type == "belly_flop") splash_power *= 0.15;
 
-    // --- HEAVY LANDING PENALTIES ---
-    if (landing_type == "back_slap") {
-        splash_power *= 0.3;
-    }
-    else if (landing_type == "belly_flop") {
-        splash_power *= 0.15;
-    }
+splash_power = clamp(splash_power, 50, 1000);
 
-    // --- SCORE ---
-    var splash_score = round(splash_power);
-    splash_score += flip_count * 50;
-    splash_score *= trick_multiplier;
+// --- SCORE ---
+var splash_score = round(splash_power);
 
-    if (landing_type == "back_slap") {
-        splash_score -= 300;
-    }
-    else if (landing_type == "belly_flop") {
-        splash_score -= 500;
-    }
+if (landing_type == "back_slap")  splash_score -= 300;
+if (landing_type == "belly_flop") splash_score -= 500;
 
-    splash_score = max(splash_score, -300);
+splash_score = max(splash_score, -300);
 
-    last_splash_score = current_score;
-    current_score = splash_score;
+last_splash_score = current_score;
+current_score     = splash_score;
 
 var rotate_input = keyboard_check(vk_right) - keyboard_check(vk_left);
 
@@ -477,8 +469,8 @@ var rotate_input = keyboard_check(vk_right) - keyboard_check(vk_left);
     }
 }
 
-camera_target = highest_splash;
-camera_follow = true;
+obj_turn_system.camera_target = highest_splash;
+obj_turn_system.camera_follow = true;
 }
 
     // --- RESET ---
@@ -552,34 +544,4 @@ if (respawn_timer > 0) {
 		state = "idle";
 		image_index = 0;
     }
-	
-	// Camera Reset
-	camera_follow = false;
-	camera_target = noone;
-
-	var cam = view_camera[0];
-	camera_set_view_pos(cam, 0, 738);
-}
-
-// --- CAMERA FOLLOW SPLASH ---
-if (camera_follow && instance_exists(camera_target)) {
-
-    var cam = view_camera[0];
-
-    var cam_x = camera_get_view_x(cam);
-    var cam_y = camera_get_view_y(cam);
-
-    var target_y = camera_target.y - 300;
-
-    cam_y = lerp(cam_y, target_y, 0.08);
-
-    cam_y = clamp(cam_y, 0, room_height - 768);
-
-    camera_set_view_pos(cam, cam_x, cam_y);
-
-    // STOP FOLLOWING WHEN SPLASH SLOWS
-    if (abs(camera_target.vspeed) < 0.5) {
-    camera_follow = false;
-    respawn_timer = 20; //trigger respawn here
-	}
 }

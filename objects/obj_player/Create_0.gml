@@ -61,11 +61,6 @@ trick_multiplier = 1;
 
 performed_cheesecutter = false;
 
-// --- CAMERA ---
-var cam = view_camera[0];
-camera_target = noone;
-camera_follow = false;
-
 // --- TURN PHASES --- (This is for future)
 global.game_phase = "cpu";
 
@@ -85,10 +80,5 @@ cpu_move = 0;
 cpu_jump = 0;
 cpu_crouch = 0;
 
-//SOUND
-water_sound = audio_play_sound(snd_water, 1, true);
-music_sound = audio_play_sound(snd_french_letter, 1, true);
-
-// --- SET DEFAULT VOLUME ---
-audio_sound_gain(water_sound, 0.0, 0);   // make it 0.15
-audio_sound_gain(music_sound, 0.0, 0);   // make it 0.4
+//turn attempts
+dive_complete = false;

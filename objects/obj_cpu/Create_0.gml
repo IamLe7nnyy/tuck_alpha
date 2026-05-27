@@ -56,11 +56,6 @@ last_flip_label = "";
 trick_multiplier = 1;
 performed_cheesecutter = false;
 
-// --- CAMERA ---
-var cam = view_camera[0];
-camera_target = noone;
-camera_follow = false;
-
 // --- one jump per attempt ---
 has_jumped = false;
 last_rotation = 0;
@@ -69,6 +64,9 @@ cpu_score = 0;
 cpu_last_score = 0;
 air_action = "none";
 cpu_release_threshold = 0;
+
+// --- Turn attempts
+dive_complete = false;
 
 // --- AI DECISIONS (set at jump time, not per frame) ---
 cpu_will_cheesecut = false;    // ← decided once per jump

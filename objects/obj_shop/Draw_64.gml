@@ -2,23 +2,32 @@ draw_set_halign(fa_center);
 draw_set_valign(fa_middle);
 draw_set_font(-1);
 
-var cx = display_get_gui_width() / 2;
+var cx = display_get_gui_width()  / 2;
 var cy = display_get_gui_height() / 2;
+var sw = display_get_gui_width();
 
-// show where the player is in the run
+// round cleared label
 var round_label = "";
 switch (global.round) {
-    case 1: round_label = "OPPONENT 1 CLEARED!"; break;
-    case 2: round_label = "OPPONENT 2 CLEARED!"; break;
-    case 3: round_label = "BOSS CLEARED!"; break;
+    case 2: round_label = "OPPONENT 1 CLEARED!"; break;
+    case 3: round_label = "OPPONENT 2 CLEARED!"; break;
+    case 1: round_label = "BOSS CLEARED!";        break;
 }
 
 draw_set_color(c_lime);
-draw_text(cx, cy - 100, round_label);
+draw_text(cx, cy - 120, round_label);
 
 draw_set_color(c_black);
-draw_text(cx, cy - 60, "ANTE " + string(global.ante) + "  |  ROUND " + string(global.round));
+draw_text(cx, cy - 80, "ANTE " + string(global.ante) + "  |  ROUND " + string(global.round));
 
+// gold display
+draw_set_color(c_yellow);
+draw_set_halign(fa_right);
+draw_text(sw - 20, 20, "GOLD: " + string(global.gold));
+
+// shop placeholder
+draw_set_halign(fa_center);
+draw_set_color(c_black);
 draw_text(cx, cy, "[ SHOP COMING SOON ]");
 
 draw_text(cx, cy + 80, "PRESS ENTER TO CONTINUE");
