@@ -1,4 +1,4 @@
-if (obj_turn_system.turn != "cpu") {
+if (obj_turn_system.turn != "cpu" && obj_turn_system.turn != "boss_demo") {
     exit;
 }
 
@@ -33,10 +33,10 @@ if (respawn_timer > 0) {
     performed_cheesecutter = false;
     trick_multiplier = 1;
 
-    // reset AI decisions
+    // reset AI decisions — always safe to wipe on respawn
     cpu_will_cheesecut = false;
-    cpu_rotate_dir = 0;
-    cpu_tuck_y = 0;
+    cpu_rotate_dir     = 0;
+    cpu_tuck_y         = 0;
 
     state = "idle";
     image_index = 0;
@@ -140,20 +140,34 @@ if (charging && !crouch) {
     cpu_release_threshold = 0;
 
     tuck_quality = "none";
-    air_action = choose("frontflip", "backflip", "tuck", "none");
 
-// --- DECIDE ALL AI TRICKS AT JUMP TIME ---
-cpu_will_cheesecut = (random(1) < 0.3);
-trick_multiplier = 1;
-performed_cheesecutter = false;
+    // force tuck for demo dive
+    if (is_demo) {
+        air_action = "tuck";
+    } else {
+        air_action = choose("frontflip", "backflip", "tuck", "none");
+    }
 
-// rotation direction driven by air_action — not separate
-switch (air_action) {
-    case "frontflip": cpu_rotate_dir = -1; break;  // spins one way
-    case "backflip":  cpu_rotate_dir = 1;  break;  // spins other way
-    case "tuck":      cpu_rotate_dir = 0;  break;  // no spin during tuck
-    default:          cpu_rotate_dir = 0;  break;  // no spin on basic jump
+    // --- DECIDE ALL AI TRICKS AT JUMP TIME ---
+    // if is_demo, keep cpu_will_cheesecut as set at spawn (true)
+if (!is_demo) {
+    if (global.round == 3 && !performed_cheesecutter 
+    &&  global.cheesecutter_cooldown == 0) {    // ← add this check
+        cpu_will_cheesecut = (random(1) < 0.5);
+    } else {
+        cpu_will_cheesecut = false;
+    }
 }
+    trick_multiplier = 1;
+    performed_cheesecutter = false;
+
+    // rotation direction driven by air_action
+    switch (air_action) {
+        case "frontflip": cpu_rotate_dir = -1; break;
+        case "backflip":  cpu_rotate_dir = 1;  break;
+        case "tuck":      cpu_rotate_dir = 0;  break;
+        default:          cpu_rotate_dir = 0;  break;
+    }
 
     // decide tuck y position based on water location
     var water = instance_nearest(x, y, obj_water);
@@ -162,16 +176,14 @@ switch (air_action) {
         var zone_height = total_height / 2;
         var zone_offset = 120;
         var top_zone = water.bbox_top - total_height - zone_offset;
-        // pick a random zone to tuck in — same zones as player
         var zone_pick = irandom(4);
         cpu_tuck_y = top_zone + (zone_height * zone_pick) + (zone_height * 0.5);
-        // assign tuck quality based on chosen zone
         switch (zone_pick) {
-            case 0: tuck_quality = "ok";     break;
-            case 1: tuck_quality = "good";   break;
+            case 0: tuck_quality = "ok";      break;
+            case 1: tuck_quality = "good";    break;
             case 2: tuck_quality = "perfect"; break;
-            case 3: tuck_quality = "good";   break;
-            case 4: tuck_quality = "ok";     break;
+            case 3: tuck_quality = "good";    break;
+            case 4: tuck_quality = "ok";      break;
         }
     } else {
         cpu_tuck_y = 99999;
@@ -184,25 +196,22 @@ switch (air_action) {
 
 // --- AIR CONTROL ---
 if (!on_ground) {
-
-    // only apply cheesecutter flag halfway through the jump
-    // this stops it immediately overriding the jump animation
-    if (cpu_will_cheesecut && !performed_cheesecutter && vspeed > 0) {
-        performed_cheesecutter = true;
-        trick_multiplier = 2;
-        cpu_will_cheesecut = false;
-    }
+    show_debug_message("in air — cpu_will_cheesecut: " + string(cpu_will_cheesecut) + " vspeed: " + string(vspeed) + " performed: " + string(performed_cheesecutter));
+if (cpu_will_cheesecut && !performed_cheesecutter && vspeed > 0) {
+    performed_cheesecutter = true;
+    trick_multiplier = 2;
+    cpu_will_cheesecut = false;
+    global.cheesecutter_cooldown = 1; // same cooldown as player
+    show_debug_message("CHEESECUTTER FIRED");
+}
 }
 
 
 // --- GRAVITY ---
 if (!on_ground) {
 
-    // rotation matches player exactly — driven by cpu_rotate_dir
     var target_speed = cpu_rotate_dir * 6;
     rotation_speed = lerp(rotation_speed, target_speed, 0.2);
-
-    // same clamp as player
     rotation_speed = clamp(rotation_speed, -6, 6);
 
     rotation -= rotation_speed;
@@ -353,19 +362,23 @@ if (sprite_index != new_sprite) {
 // --- SPLASH ---
 if (in_water && !was_in_water) {
     audio_play_sound(snd_splash2, 1, false);
-	dive_complete = true;
+
+    if (!is_demo) {
+        dive_complete = true;
+    }
+
     flip_count = floor((abs(rotation) + 90) / 360);
     var landing_angle = (image_angle mod 360 + 360) mod 360;
     var landing_type = "clean";
     if (landing_angle > 135 && landing_angle < 225) landing_type = "back_slap";
     else if ((landing_angle > 45 && landing_angle < 135) || (landing_angle > 225 && landing_angle < 315)) landing_type = "belly_flop";
     var flip_type = image_angle > 0 ? "BACKFLIP" : "FRONTFLIP";
-if (flip_count == 0)      last_flip_label = "";
-else if (flip_count == 1) last_flip_label = flip_type;
-else if (flip_count == 2) last_flip_label = "DOUBLE " + flip_type;
-else if (flip_count == 3) last_flip_label = "TRIPLE " + flip_type;
-else if (flip_count == 4) last_flip_label = "QUADRUPLE " + flip_type;
-else                      last_flip_label = string(flip_count) + "x " + flip_type;
+    if (flip_count == 0)      last_flip_label = "";
+    else if (flip_count == 1) last_flip_label = flip_type;
+    else if (flip_count == 2) last_flip_label = "DOUBLE " + flip_type;
+    else if (flip_count == 3) last_flip_label = "TRIPLE " + flip_type;
+    else if (flip_count == 4) last_flip_label = "QUADRUPLE " + flip_type;
+    else                      last_flip_label = string(flip_count) + "x " + flip_type;
     var base_y = y - 40;
     if (landing_type != "clean") {
         var popup = instance_create_layer(x, base_y, layer, obj_flip_labels);
@@ -387,43 +400,44 @@ else                      last_flip_label = string(flip_count) + "x " + flip_typ
         var popup = instance_create_layer(x, base_y, layer, obj_flip_labels);
         popup.text = string_upper(tuck_quality) + " TUCK";
     }
-// --- POWER ---
-var charge_power = last_charge / max_charge;
-var base_power   = lerp(50, 200, charge_power);
-var impact_power = abs(vspeed) * 20;
-var flip_bonus   = flip_count * 50;
 
-var zone_bonus = 0;
-switch (tuck_quality) {
-    case "perfect":   zone_bonus =  150; break;
-    case "good":      zone_bonus =   80; break;
-    case "ok":        zone_bonus =   30; break;
-    case "late":      zone_bonus =  -20; break;
-    case "too_early": zone_bonus =  -30; break;
-    default:          zone_bonus =  -50; break;
-}
+    // --- POWER ---
+    var charge_power = last_charge / max_charge;
+    var base_power   = lerp(50, 200, charge_power);
+    var impact_power = abs(vspeed) * 20;
+    var flip_bonus   = flip_count * 50;
 
-var raw_power = base_power + zone_bonus + impact_power + flip_bonus;
-var splash_power = raw_power * trick_multiplier;
+    var zone_bonus = 0;
+    switch (tuck_quality) {
+        case "perfect":   zone_bonus =  150; break;
+        case "good":      zone_bonus =   80; break;
+        case "ok":        zone_bonus =   30; break;
+        case "late":      zone_bonus =  -20; break;
+        case "too_early": zone_bonus =  -30; break;
+        default:          zone_bonus =  -50; break;
+    }
 
-// --- LANDING PENALTIES ---
-if (landing_type == "back_slap")  splash_power *= 0.3;
-if (landing_type == "belly_flop") splash_power *= 0.15;
+    var raw_power = base_power + zone_bonus + impact_power + flip_bonus;
+    var splash_power = raw_power * trick_multiplier;
 
-splash_power = clamp(splash_power, 50, 1000);
+    // --- LANDING PENALTIES ---
+    if (landing_type == "back_slap")  splash_power *= 0.3;
+    if (landing_type == "belly_flop") splash_power *= 0.15;
 
-// --- SCORE ---
-var splash_score = round(splash_power);
+    splash_power = clamp(splash_power, 50, 1000);
 
-if (landing_type == "back_slap")  splash_score -= 300;
-if (landing_type == "belly_flop") splash_score -= 500;
+    // --- SCORE ---
+    var splash_score = round(splash_power);
 
-splash_score = max(splash_score, -300);
+    if (landing_type == "back_slap")  splash_score -= 300;
+    if (landing_type == "belly_flop") splash_score -= 500;
 
-cpu_last_score = cpu_score;
-cpu_score      = splash_score;
+    splash_score = max(splash_score, -300);
 
-var count = clamp(round(splash_power / 25), 8, 40);
+    cpu_last_score = cpu_score;
+    cpu_score      = splash_score;
+
+    var count = clamp(round(splash_power / 25), 8, 40);
 
     var highest_splash = noone;
     var highest_y = 999999;
@@ -439,8 +453,8 @@ var count = clamp(round(splash_power / 25), 8, 40);
             highest_splash = splash;
         }
     }
-obj_turn_system.camera_target = highest_splash;
-obj_turn_system.camera_follow = true;
+    obj_turn_system.camera_target = highest_splash;
+    obj_turn_system.camera_follow = true;
     vspeed = 0;
     hspeed = 0;
 }

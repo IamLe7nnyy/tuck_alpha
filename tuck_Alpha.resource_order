@@ -1,9 +1,15 @@
 {
   "FolderOrderSettings":[
+    {"name":"bgs","order":16,"path":"folders/Sprites/bgs.yy",},
     {"name":"cpu1","order":12,"path":"folders/Sprites/cpu1.yy",},
+    {"name":"group1","order":9,"path":"folders/Sprites/cpu1/group1.yy",},
     {"name":"player","order":13,"path":"folders/Sprites/player.yy",},
+    {"name":"shop items","order":15,"path":"folders/Sprites/shop items.yy",},
   ],
   "ResourceOrderSettings":[
+    {"name":"obj_ability_unlock","order":16,"path":"objects/obj_ability_unlock/obj_ability_unlock.yy",},
+    {"name":"obj_boss_intro","order":15,"path":"objects/obj_boss_intro/obj_boss_intro.yy",},
+    {"name":"obj_bottle","order":14,"path":"objects/obj_bottle/obj_bottle.yy",},
     {"name":"obj_cpu","order":6,"path":"objects/obj_cpu/obj_cpu.yy",},
     {"name":"obj_flip_labels","order":5,"path":"objects/obj_flip_labels/obj_flip_labels.yy",},
     {"name":"obj_gameover","order":12,"path":"objects/obj_gameover/obj_gameover.yy",},
@@ -16,6 +22,8 @@
     {"name":"obj_tuck_success","order":4,"path":"objects/obj_tuck_success/obj_tuck_success.yy",},
     {"name":"obj_turn_system","order":9,"path":"objects/obj_turn_system/obj_turn_system.yy",},
     {"name":"obj_water","order":2,"path":"objects/obj_water/obj_water.yy",},
+    {"name":"Room_Ability_Unlock","order":6,"path":"rooms/Room_Ability_Unlock/Room_Ability_Unlock.yy",},
+    {"name":"Room_Boss_Intro","order":5,"path":"rooms/Room_Boss_Intro/Room_Boss_Intro.yy",},
     {"name":"Room_Game","order":1,"path":"rooms/Room_Game/Room_Game.yy",},
     {"name":"Room_Shop","order":2,"path":"rooms/Room_Shop/Room_Shop.yy",},
     {"name":"Room_Win","order":4,"path":"rooms/Room_Win/Room_Win.yy",},
@@ -26,6 +34,7 @@
     {"name":"snd_french_letter","order":2,"path":"sounds/snd_french_letter/snd_french_letter.yy",},
     {"name":"snd_splash","order":1,"path":"sounds/snd_splash/snd_splash.yy",},
     {"name":"snd_splash2","order":3,"path":"sounds/snd_splash2/snd_splash2.yy",},
+    {"name":"spr_bottle","order":1,"path":"sprites/spr_bottle/spr_bottle.yy",},
     {"name":"spr_cheesecutter_1","order":1,"path":"sprites/spr_cheesecutter_1/spr_cheesecutter_1.yy",},
     {"name":"spr_cheesecutter","order":1,"path":"sprites/spr_cheesecutter/spr_cheesecutter.yy",},
     {"name":"spr_crouch_1","order":2,"path":"sprites/spr_crouch_1/spr_crouch_1.yy",},

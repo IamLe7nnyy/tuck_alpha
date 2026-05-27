@@ -73,3 +73,6 @@ cpu_will_cheesecut = false;    // ← decided once per jump
 cpu_rotate_dir = 0;            // ← -1, 0, or 1 — decided once per jump
 cpu_tuck_y = 0;                // ← y position to trigger tuck — decided once per jump
 impact_vspeed = 0;
+
+//Boss ability demo
+is_demo = false;

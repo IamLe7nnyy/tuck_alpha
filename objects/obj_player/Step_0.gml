@@ -38,9 +38,14 @@ var jump = keyboard_check_released(vk_down);
 var crouch = keyboard_check(vk_down);
 
 // --- TRACK CHEESECUTTER ---
-if (!on_ground && keyboard_check(vk_space) && !performed_cheesecutter) {
+// cheesecutter — only if unlocked and not on cooldown
+if (!on_ground && keyboard_check_pressed(ord("Z")) 
+&&  global.has_cheesecutter 
+&&  global.cheesecutter_cooldown == 0
+&&  !performed_cheesecutter) {
     performed_cheesecutter = true;
     trick_multiplier = 2;
+    global.cheesecutter_cooldown = 1; // set to 3 so after ticking down it becomes 2 rounds
 }
 
 // --- TUCK INPUT WITH ZONES ---
@@ -219,7 +224,7 @@ if (untuck_timer > 0) {
 if (untuck_timer > 0) {
     state = "untuck";
 }
-else if (!on_ground && keyboard_check(vk_space)) {
+else if (!on_ground && performed_cheesecutter) {
     state = "cheesecutter";
 }
 else if (!on_ground && keyboard_check(vk_down)) {
@@ -328,7 +333,9 @@ if (in_water && !was_in_water) {
     // 🔊 SPLASH SOUND (ONE SHOT)
     audio_play_sound(snd_splash2, 1, false);
 	
-	dive_complete = true; 
+	if (!global.bottle_equipped) {
+    dive_complete = true;
+} 
 
     // --- CALCULATE FLIPS FIRST ---
     flip_count = floor((abs(rotation) + 90) / 360);
@@ -469,8 +476,27 @@ var rotate_input = keyboard_check(vk_right) - keyboard_check(vk_left);
     }
 }
 
-obj_turn_system.camera_target = highest_splash;
-obj_turn_system.camera_follow = true;
+// --- BOTTLE ITEM ---
+if (global.item_bottle > 0 && global.bottle_equipped) {
+    global.item_bottle--;
+    global.bottle_equipped = false;
+
+    // spawn bottle shooting upward
+    var bottle = instance_create_layer(x, y - 10, "Instances", obj_bottle);
+    bottle.vspeed  = -18;  // shoots up fast
+    bottle.hspeed  = random_range(-1, 1);
+    bottle.bottle_power   = splash_power;
+
+    // camera follows bottle instead of splash
+    obj_turn_system.camera_target = bottle;
+    obj_turn_system.camera_follow = true;
+
+} else {
+
+    // no bottle — camera follows splash as normal
+    obj_turn_system.camera_target = highest_splash;
+    obj_turn_system.camera_follow = true;
+}
 }
 
     // --- RESET ---
@@ -540,6 +566,9 @@ if (respawn_timer > 0) {
 		// --- RESET SPLASH STATE ---
 		has_splashed = false;
 		tuck_quality = "none";
+		
+		performed_cheesecutter = false;
+trick_multiplier = 1;
 
 		state = "idle";
 		image_index = 0;

@@ -57,9 +57,8 @@ flip_count = 0;
 last_flip_label = "";
 
 // --- TRICKS ---
-trick_multiplier = 1;
-
 performed_cheesecutter = false;
+trick_multiplier = 1;
 
 // --- TURN PHASES --- (This is for future)
 global.game_phase = "cpu";
