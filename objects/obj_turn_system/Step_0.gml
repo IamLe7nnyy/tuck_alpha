@@ -1,3 +1,21 @@
+show_debug_message("time_scale: " + string(time_scale));
+
+// --- PAUSE TOGGLE ---
+if (keyboard_check_pressed(vk_escape)) {
+    game_paused = !game_paused;
+    time_scale = game_paused ? 0 : 1;
+}
+
+if (game_paused) exit;
+
+// --- DEBUG TOGGLE ---
+// press 1 to add a test bottle
+if (keyboard_check_pressed(ord("1"))) {
+    global.item_bottle++;
+    show_debug_message("Bottle added — total: " + string(global.item_bottle));
+}
+// ... rest of your code continues unchanged below
+
 // --- DEBUG TOGGLE ---
 // press 1 to add a test bottle
 if (keyboard_check_pressed(ord("1"))) {

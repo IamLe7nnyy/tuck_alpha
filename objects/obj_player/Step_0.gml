@@ -1,3 +1,5 @@
+if (instance_exists(obj_turn_system) && obj_turn_system.game_paused) exit;
+
 if (!player_turn_started) {
 
     player_turn_started = true;

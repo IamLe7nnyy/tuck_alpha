@@ -2,6 +2,8 @@ if (obj_turn_system.turn != "cpu" && obj_turn_system.turn != "boss_demo") {
     exit;
 }
 
+if (obj_turn_system.game_paused) exit;
+
 // --- RESPAWN SYSTEM ---
 if (respawn_timer > 0) {
 

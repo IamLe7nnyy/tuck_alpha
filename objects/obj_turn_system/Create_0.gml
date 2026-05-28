@@ -110,3 +110,8 @@ if (is_boss_round) {
     cpu.on_ground = true;
 }
 
+game_paused = false;
+pause_click_ready = false;
+
+time_scale = 1;
+

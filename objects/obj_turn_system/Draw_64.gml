@@ -7,6 +7,114 @@ var sw = display_get_gui_width();
 var sh = display_get_gui_height();
 
 // ============================================================
+//  PAUSE MENU
+// ============================================================
+if (game_paused) {
+
+    var mx = device_mouse_x_to_gui(0);
+    var my = device_mouse_y_to_gui(0);
+
+    draw_set_halign(fa_center);
+    draw_set_valign(fa_middle);
+    draw_set_font(-1);
+
+    // dim background
+    draw_set_color(c_black);
+    draw_set_alpha(0.75);
+    draw_rectangle(0, 0, sw, sh, false);
+    draw_set_alpha(1);
+
+    // title
+    draw_set_color(c_white);
+    draw_text(cx, cy - 120, "PAUSED");
+
+    // divider
+    draw_set_color(c_white);
+    draw_line(cx - 100, cy - 95, cx + 100, cy - 95);
+
+    // button dimensions
+    var btn_w  = 200;
+    var btn_h  = 35;
+    var btn_x  = cx - btn_w / 2;
+
+    // track clean single clicks
+    if (!mouse_check_button(mb_left)) {
+        pause_click_ready = true;
+    }
+    var clicked = (pause_click_ready && mouse_check_button(mb_left));
+    if (clicked) {
+        pause_click_ready = false;
+    }
+
+    // --- RESUME BUTTON ---
+    var btn1_y = cy - 60;
+    var hover1 = (mx > btn_x && mx < btn_x + btn_w
+              &&  my > btn1_y && my < btn1_y + btn_h);
+
+    draw_set_color(hover1 ? c_yellow : c_white);
+    draw_rectangle(btn_x, btn1_y, btn_x + btn_w, btn1_y + btn_h, false);
+    draw_set_color(c_black);
+    draw_rectangle(btn_x, btn1_y, btn_x + btn_w, btn1_y + btn_h, true);
+    draw_set_color(c_black);
+    draw_text(cx, btn1_y + btn_h / 2, "RESUME");
+
+    if (clicked && hover1) {
+        game_paused = false;
+        time_scale = 1;
+    }
+
+    // --- RESTART RUN BUTTON ---
+    var btn2_y = cy;
+    var hover2 = (mx > btn_x && mx < btn_x + btn_w
+              &&  my > btn2_y && my < btn2_y + btn_h);
+
+    draw_set_color(hover2 ? c_yellow : c_white);
+    draw_rectangle(btn_x, btn2_y, btn_x + btn_w, btn2_y + btn_h, false);
+    draw_set_color(c_black);
+    draw_rectangle(btn_x, btn2_y, btn_x + btn_w, btn2_y + btn_h, true);
+    draw_set_color(c_black);
+    draw_text(cx, btn2_y + btn_h / 2, "RESTART RUN");
+
+    if (clicked && hover2) {
+        game_paused = false;
+        time_scale = 1;
+        global.ante                  = 1;
+        global.round                 = 1;
+        global.run_active            = true;
+        global.gold                  = 0;
+        global.item_bottle           = 0;
+        global.bottle_equipped       = false;
+        global.has_cheesecutter      = false;
+        global.cheesecutter_cooldown = 0;
+        room_goto(Room_Game);
+    }
+
+    // --- MAIN MENU BUTTON ---
+    var btn3_y = cy + 60;
+    var hover3 = (mx > btn_x && mx < btn_x + btn_w
+              &&  my > btn3_y && my < btn3_y + btn_h);
+
+    draw_set_color(hover3 ? c_red : c_white);
+    draw_rectangle(btn_x, btn3_y, btn_x + btn_w, btn3_y + btn_h, false);
+    draw_set_color(hover3 ? c_red : c_black);
+    draw_rectangle(btn_x, btn3_y, btn_x + btn_w, btn3_y + btn_h, true);
+    draw_set_color(hover3 ? c_white : c_black);
+    draw_text(cx, btn3_y + btn_h / 2, "MAIN MENU");
+
+    if (clicked && hover3) {
+        game_paused = false;
+        time_scale = 1;
+        scr_lose();
+    }
+
+    // hint
+    draw_set_color(c_gray);
+    draw_text(cx, cy + 120, "ESC to resume");
+
+    exit;
+}
+
+// ============================================================
 //  RESULTS SCREEN
 // ============================================================
 if (turn == "results") {
@@ -81,7 +189,7 @@ if (turn == "results") {
         }
     }
 
-    exit;  // ← only one exit, only inside results block
+    exit;
 }
 
 // ============================================================
@@ -196,13 +304,16 @@ if (turn == "player" && global.item_bottle > 0) {
     draw_set_color(c_white);
     draw_text(sw - 20, 180, "x" + string(global.item_bottle));
 
-    var btn_x = sw - 120;
-    var btn_y = 150;
-    var btn_w = 100;
-    var btn_h = 25;
+    var btn_x  = sw - 120;
+    var btn_y  = 150;
+    var btn_w  = 100;
+    var btn_h  = 25;
 
-    var btn_hover = (mouse_x > btn_x && mouse_x < btn_x + btn_w
-                 &&  mouse_y > btn_y && mouse_y < btn_y + btn_h);
+    var mx2 = device_mouse_x_to_gui(0);
+    var my2 = device_mouse_y_to_gui(0);
+
+    var btn_hover = (mx2 > btn_x && mx2 < btn_x + btn_w
+                 &&  my2 > btn_y && my2 < btn_y + btn_h);
 
     if (global.bottle_equipped) {
         draw_set_color(c_lime);

@@ -1,3 +1,5 @@
+time_scale = 1;
+
 // initialise globals on first launch only
 if (!variable_global_exists("ante")) {
     global.ante            = 1;

@@ -1,3 +1,5 @@
+if (instance_exists(obj_turn_system) && obj_turn_system.game_paused) exit;
+
 // fly upward
 vspeed += 0.15;  // gravity — lighter than splash so it goes higher
 y += vspeed;
