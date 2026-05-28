@@ -58,7 +58,7 @@ if (turn == "results") {
         draw_set_color(c_red);
         draw_text(cx, cy, "CPU WINS!");
         draw_set_color(c_white);
-        draw_text(cx, cy + 35, "ANTE " + string(global.ante) + "  |  ROUND " + string(global.round));
+        draw_text(cx, cy + 35, "LOCATION " + string(global.ante) + "  |  ROUND " + string(global.round));
         draw_set_color(c_yellow);
         draw_text(cx, cy + 65, "GOLD EARNED THIS RUN: " + string(global.gold));
 
@@ -145,9 +145,9 @@ if (turn == "boss_demo" && demo_phase == "pause") {
 draw_set_halign(fa_right);
 
 draw_set_color(c_black);
-draw_text(sw - 20, 20, "ANTE " + string(global.ante) + "  |  ROUND " + string(global.round));
+draw_text(sw - 20, 20, "LOCATION " + string(global.ante) + "  |  ROUND " + string(global.round));
 
-draw_set_color(c_yellow);
+draw_set_color(c_purple);
 draw_text(sw - 20, 45, "GOLD: " + string(global.gold));
 
 // cheesecutter ability HUD
@@ -192,12 +192,12 @@ if (turn == "player" && global.item_bottle > 0) {
     draw_set_halign(fa_right);
     draw_set_valign(fa_top);
 
-    draw_sprite(spr_bottle, 0, sw - 60, 80);
+    draw_sprite(spr_bottle, 0, sw - 60, 120);
     draw_set_color(c_white);
-    draw_text(sw - 20, 90, "x" + string(global.item_bottle));
+    draw_text(sw - 20, 180, "x" + string(global.item_bottle));
 
     var btn_x = sw - 120;
-    var btn_y = 110;
+    var btn_y = 150;
     var btn_w = 100;
     var btn_h = 25;
 
@@ -222,24 +222,14 @@ if (turn == "player" && global.item_bottle > 0) {
     draw_set_color(c_black);
 
     if (global.bottle_equipped) {
-        draw_text(btn_x + btn_w / 2, btn_y + btn_h / 2, "UNEQUIP");
+        draw_text(btn_x + btn_w / 2, btn_y + btn_h / 2, "EQUIPPED");
     } else {
-        draw_text(btn_x + btn_w / 2, btn_y + btn_h / 2, "EQUIP");
+        draw_text(btn_x + btn_w / 2, btn_y + btn_h / 2, "UNEQUIPPED");
     }
 
     if ((mouse_check_button_pressed(mb_left) && btn_hover)
     ||   keyboard_check_pressed(ord("E"))) {
         global.bottle_equipped = !global.bottle_equipped;
-    }
-
-    draw_set_valign(fa_top);
-    draw_set_halign(fa_right);
-    if (global.bottle_equipped) {
-        draw_set_color(c_lime);
-        draw_text(sw - 20, 140, "EQUIPPED");
-    } else {
-        draw_set_color(c_gray);
-        draw_text(sw - 20, 140, "NOT EQUIPPED");
     }
 }
 

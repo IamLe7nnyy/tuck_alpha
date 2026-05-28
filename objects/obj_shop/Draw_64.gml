@@ -60,7 +60,7 @@ draw_set_color(c_black);
 draw_text(item_x + item_w / 2, item_y + 75, "WATER BOTTLE");
 
 // item cost
-draw_set_color(c_yellow);
+draw_set_color(c_black);
 draw_text(item_x + item_w / 2, item_y + 95, "600 GOLD");
 
 // owned
